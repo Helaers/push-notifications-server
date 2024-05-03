@@ -19,7 +19,6 @@ const pool = new Pool({
   host: params.hostname,
   port: params.port,
   database: params.pathname.split("/")[1],
-  ssl: true,
 });
 
 const PORT = process.env.PORT || 3000;
