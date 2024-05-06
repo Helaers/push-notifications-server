@@ -1,6 +1,8 @@
 const express = require("express");
 const { Pool } = require("pg");
 const url = require("url");
+const sendPushNotification = require("./push-notifications.js");
+
 require("dotenv").config();
 
 const app = express();
@@ -19,6 +21,7 @@ const pool = new Pool({
   host: params.hostname,
   port: params.port,
   database: params.pathname.split("/")[1],
+  // ssl: true, // Uncomment for local development. Needed for external db connection url.
 });
 
 const PORT = process.env.PORT || 3000;
@@ -41,11 +44,21 @@ app.get("/push-tokens", (req, res) => {
 app.post("/push-token", (req, res) => {
   const { token } = req.body;
 
-  pool.query("INSERT INTO push_tokens (token) VALUES ($1)", [token], (error, results) => {
+  pool.query("SELECT * FROM push_tokens WHERE token = $1", [token], (error, results) => {
     if (error) {
       throw error;
     }
-    res.status(200).send(`Token added: ${token}`);
+
+    if (results.rows.length > 0) {
+      return res.status(200).send(`Token already exists: ${token}`);
+    }
+
+    pool.query("INSERT INTO push_tokens (token) VALUES ($1)", [token], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(200).send(`Token added: ${token}`);
+    });
   });
 });
 
@@ -56,6 +69,32 @@ app.delete("/push-tokens", (req, res) => {
       throw error;
     }
     res.status(200).send("All tokens removed");
+  });
+});
+
+// SEND notification
+app.post("/send-notification", (req, res) => {
+  const message = {
+    title: req.body.title,
+    body: req.body.body,
+  };
+
+  // Get all tokens
+  pool.query("SELECT * FROM push_tokens", async (error, results) => {
+    if (error) {
+      throw error;
+    }
+    const pushTokens = results.rows.map((row) => row.token);
+    const uniqueTokens = [...new Set(pushTokens)];
+
+    if (uniqueTokens.length === 0) {
+      res.status(200).send("No tokens to send notifications to");
+      return;
+    }
+
+    await sendPushNotification(uniqueTokens, message);
+
+    res.status(200).json(uniqueTokens);
   });
 });
 
