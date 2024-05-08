@@ -1,12 +1,19 @@
 const express = require("express");
 const { Pool } = require("pg");
 const url = require("url");
+const cors = require("cors");
+
 const sendPushNotification = require("./push-notifications.js");
 
 require("dotenv").config();
 
 const app = express();
 
+app.use(
+  cors({
+    origin: "https://push-notifications-app.onrender.com",
+  })
+);
 app.use(express.json());
 
 const params = url.parse(process.env.DATABASE_URL);
