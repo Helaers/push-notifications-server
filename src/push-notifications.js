@@ -22,7 +22,7 @@ async function sendPushNotification(pushTokens, message) {
       sound: "default",
       title: message.title || "Default title",
       body: message.body || "This is a default test notification",
-      data: { withSome: "data" },
+      data: message.data,
     });
   }
 

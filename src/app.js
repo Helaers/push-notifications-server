@@ -84,6 +84,7 @@ app.post("/send-notification", (req, res) => {
   const message = {
     title: req.body.title,
     body: req.body.body,
+    data: req.body.data,
   };
 
   // Get all tokens
