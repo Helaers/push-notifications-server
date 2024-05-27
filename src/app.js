@@ -81,11 +81,7 @@ app.delete("/push-tokens", (req, res) => {
 
 // SEND notification
 app.post("/send-notification", (req, res) => {
-  const message = {
-    title: req.body.title,
-    body: req.body.body,
-    data: req.body.data,
-  };
+  const message = req.body;
 
   // Get all tokens
   pool.query("SELECT * FROM push_tokens", async (error, results) => {
